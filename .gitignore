@@ -1,0 +1,51 @@
+# Created by https://www.toptal.com/developers/gitignore/api/d,visualstudiocode
+# Edit at https://www.toptal.com/developers/gitignore?templates=d,visualstudiocode
+
+### D ###
+# Compiled Object files
+*.o
+*.obj
+
+# Compiled Dynamic libraries
+*.so
+*.dylib
+*.dll
+
+# Compiled Static libraries
+*.a
+*.lib
+
+# Executables
+*.exe
+
+# DUB
+.dub
+docs.json
+__dummy.html
+docs/
+
+# Code coverage
+*.lst
+
+### D Patch ###
+# Test Executables
+*-test-*
+
+# Comment to allow dub lock file to be version controlled as well
+dub.selections.json
+
+### VisualStudioCode ###
+.vscode/*
+
+# Local History for Visual Studio Code
+.history/
+
+# Built Visual Studio Code Extensions
+*.vsix
+
+### VisualStudioCode Patch ###
+# Ignore all local history of files
+.history
+.ionide
+
+# End of https://www.toptal.com/developers/gitignore/api/d,visualstudiocode

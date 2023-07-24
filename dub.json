@@ -1,0 +1,39 @@
+{
+	"-ddoxFilterArgs": [
+		"--unittest-examples",
+		"--min-protection=Protected",
+		"--ex",
+		"rlib.*"
+	],
+	"authors": [
+		"Gedert Korney"
+	],
+	"configurations": [
+		{
+			"excludedSourceFiles": [
+				"source/app.d"
+			],
+			"name": "library",
+			"targetType": "library"
+		},
+		{
+			"excludedSourceFiles": [
+				"source/app.d"
+			],
+			"name": "import",
+			"sourceFiles-posix": [
+				"librlib.a"
+			],
+			"sourceFiles-windows": [
+				"rlib.lib"
+			],
+			"targetType": "sourceLibrary"
+		}
+	],
+	"dependencies": {
+		"erupted": "~>2.1.98",
+		"silly": "~>1.1.1"
+	},
+	"license": "MIT",
+	"name": "rlib"
+}
