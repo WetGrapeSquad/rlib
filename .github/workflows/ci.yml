@@ -1,0 +1,57 @@
+# This workflow uses actions that are not certified by GitHub.
+# They are provided by a third-party and are governed by
+# separate terms of service, privacy policy, and support
+# documentation.
+name: D
+
+on:
+  push:
+    branches: [ "dev" ]
+  pull_request:
+    branches: [ "dev" ]
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+  
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-20.04, windows-latest, macos-latest]
+        dc:
+          - ldc-latest
+          - dmd-latest
+        build: [debug, release]
+        arch:
+          - x86_64
+        include:
+          # windows x86
+          - os: windows-latest
+            arch: x86
+            dc: ldc-latest
+            build: debug
+          # old compiler tests
+          - { os: ubuntu-20.04, dc: dmd-2.095.1, build: debug, arch: x86_64 }
+          - { os: ubuntu-20.04, dc: ldc-1.25.0, build: debug, arch: x86_64 }
+      
+    runs-on: ${{ matrix.os }}
+
+    steps:
+    - uses: actions/checkout@v3
+    - uses: dlang-community/setup-dlang@v1
+      with:
+        compiler: ${{ matrix.dc }}
+        
+    # Build
+    
+    - name: Build 
+      run: |
+        dub build --build=${{ matrix.build }} --arch=${{ matrix.arch }}
+    
+    # Tests
+      
+    - name: Test
+      run: |
+        dub test --arch=${{ matrix.arch }}
