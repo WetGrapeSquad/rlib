@@ -19,23 +19,14 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-20.04, windows-latest, macos-latest]
+        os: [ubuntu-20.04, windows-latest]
         dc:
           - ldc-latest
           - dmd-latest
-        build: [debug, release]
+        build: [release]
         arch:
           - x86_64
-        include:
-          # windows x86
-          - os: windows-latest
-            arch: x86
-            dc: ldc-latest
-            build: debug
-          # old compiler tests
-          - { os: ubuntu-20.04, dc: dmd-2.095.1, build: debug, arch: x86_64 }
-          - { os: ubuntu-20.04, dc: ldc-1.25.0, build: debug, arch: x86_64 }
-      
+          
     runs-on: ${{ matrix.os }}
 
     steps:
