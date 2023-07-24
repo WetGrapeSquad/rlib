@@ -3,6 +3,8 @@ import std.traits;
 import core.thread;
 import core.atomic;
 
+//TODO: Refactor and rewrite
+
 shared class Map(K, V, uint cShards = 31) if (isIntegral!K)
 {
     shared struct Shard

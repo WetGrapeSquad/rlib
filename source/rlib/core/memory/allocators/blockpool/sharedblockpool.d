@@ -261,7 +261,7 @@ shared class SharedBlockPool(uint cAlign)
     private void[] mRawMemory;
     private void[] mMemory;
 }
-
+///
 @("SharedBlockPool") unittest
 {
     void freeDel(void[] ptr)
@@ -299,6 +299,7 @@ shared class SharedBlockPool(uint cAlign)
         }
     }
 }
+///
 @("SharedBlockPool.parallel") unittest
 {
     import std.parallelism;

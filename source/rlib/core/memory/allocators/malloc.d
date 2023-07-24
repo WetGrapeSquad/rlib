@@ -9,8 +9,13 @@ class MallocAllocator : IAllocator
 {
 nothrow:
 
+    /** 
+     * Private default constructor.
+     */
+
     private this()
-    {}
+    {
+    }
 
     /** 
      * Gets the singleton allocator instance.
@@ -18,20 +23,20 @@ nothrow:
      */
     static public MallocAllocator instance()
     {
-        if(!this.mInstanced)
+        if (!this.mInstanced)
         {
             try
             {
-                synchronized(this.classinfo)
+                synchronized (this.classinfo)
                 {
-                    if(this.mInstance is null)
+                    if (this.mInstance is null)
                     {
                         this.mInstance = new MallocAllocator;
                     }
                 }
                 this.mInstanced = true;
             }
-            catch(Exception exc)
+            catch (Exception exc)
             {
                 return null;
             }
@@ -114,7 +119,7 @@ nothrow:
 
     /**
     * Reallocates a memory block with specified alignment. Alignment must be less/equal than 16.
-    */ 
+    */
     bool alignedReallocate(ref void[] b, size_t size, uint alignment)
     {
         if (alignment <= 16u)

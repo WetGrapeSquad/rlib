@@ -2,8 +2,9 @@
 	"-ddoxFilterArgs": [
 		"--unittest-examples",
 		"--min-protection=Protected",
-		"--ex",
-		"rlib.*"
+		"--in", "rlib.",
+		"--ex", "erupted",
+		"--ex", "silly"
 	],
 	"authors": [
 		"Gedert Korney"
@@ -31,6 +32,8 @@
 		}
 	],
 	"dependencies": {
+		"semver": "~>0.5.0",
+		"singlog": "~>0.5.0",
 		"erupted": "~>2.1.98",
 		"silly": "~>1.1.1"
 	},

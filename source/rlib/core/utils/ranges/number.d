@@ -1,8 +1,12 @@
 module rlib.core.utils.ranges.number;
 import std.traits;
+import core.internal.spinlock;
 debug import std.format: format;
 import std.math : approxEqual;
 
+/** 
+ * Range relation.
+ */
 enum RangeRelation
 {
     NoOverlap = 16, // 0b10000 
@@ -32,13 +36,13 @@ struct NumberRange(T) if (isScalarType!T)
 
         if (first <= second)
         {
-            this.start = first;
-            this.end = second;
+            this.mStart = first;
+            this.mEnd = second;
         }
         else
         {
-            this.start = second;
-            this.end = first;
+            this.mStart = second;
+            this.mEnd = first;
         }
     }
 
@@ -49,8 +53,8 @@ struct NumberRange(T) if (isScalarType!T)
      */
     this(R)(NumberRange!R range)
     {
-        this.start = cast(T) arg.start;
-        this.end = cast(T) arg.end;
+        this.mStart = cast(T) arg.start;
+        this.mEnd = cast(T) arg.end;
     }
 
     /** 
@@ -66,13 +70,13 @@ struct NumberRange(T) if (isScalarType!T)
 
         if (first <= second)
         {
-            this.start = first;
-            this.end = second;
+            this.mStart = first;
+            this.mEnd = second;
         }
         else
         {
-            this.start = second;
-            this.end = first;
+            this.mStart = second;
+            this.mEnd = first;
         }
 
         return this;
@@ -85,8 +89,8 @@ struct NumberRange(T) if (isScalarType!T)
      */
     ref auto opAssign(R)(const NumberRange!R range)
     {
-        this.start = cast(T) range.start;
-        this.end = cast(T) range.end;
+        this.mStart = cast(T) range.mStart;
+        this.mEnd = cast(T) range.mEnd;
 
         return this;
     }
@@ -102,10 +106,10 @@ struct NumberRange(T) if (isScalarType!T)
     {
         alias commonType = CommonType!(T, R);
 
-        const r1 = cast(commonType) other.start;
-        const r2 = cast(commonType) other.end;
-        const l1 = cast(commonType) this.start;
-        const l2 = cast(commonType) this.end;
+        const r1 = cast(commonType) other.mStart;
+        const r2 = cast(commonType) other.mEnd;
+        const l1 = cast(commonType) this.mStart;
+        const l2 = cast(commonType) this.mEnd;
 
         static if (isFloatingPoint!(commonType))
         {
@@ -127,10 +131,10 @@ struct NumberRange(T) if (isScalarType!T)
     {
         alias commonType = CommonType!(T, R);
 
-        const l1 = cast(commonType) this.start;
-        const l2 = cast(commonType) this.end;
-        const r1 = cast(commonType) other.start;
-        const r2 = cast(commonType) other.end;
+        const l1 = cast(commonType) this.mStart;
+        const l2 = cast(commonType) this.mEnd;
+        const r1 = cast(commonType) other.mStart;
+        const r2 = cast(commonType) other.mEnd;
 
         const lLength = l2 - l1;
         const rLength = r2 - r1;
@@ -151,8 +155,8 @@ struct NumberRange(T) if (isScalarType!T)
 
         const first = cast(commonType) start;
         const second = cast(commonType) end;
-        const thisFirst = cast(commonType) this.start;
-        const thisSecond = cast(commonType) this.end;
+        const thisFirst = cast(commonType) this.mStart;
+        const thisSecond = cast(commonType) this.mEnd;
 
         assert(first <= second, "Invalid range. %s > %s".format(first, second));
         assert(first + thisFirst < thisSecond && thisFirst + second <= thisSecond, 
@@ -188,9 +192,9 @@ struct NumberRange(T) if (isScalarType!T)
     {
         alias commonType = CommonType!(Arg, T);
 
-        const sum = cast(commonType) this.start + cast(commonType) index;
-        assert(sum < cast(commonType) this.end,
-            "Index out of range: [%s] bigger than [%s].".format(index, this.end - this.start));
+        const sum = cast(commonType) this.mStart + cast(commonType) index;
+        assert(sum < cast(commonType) this.mEnd,
+            "Index out of range: [%s] bigger than [%s].".format(index, this.mEnd - this.mStart));
 
         return sum;
     }
@@ -200,7 +204,7 @@ struct NumberRange(T) if (isScalarType!T)
      */
     T length() const pure @property
     {
-        return this.end - this.start;
+        return this.mEnd - this.mStart;
     }
     /** 
      * Length of a range
@@ -209,8 +213,8 @@ struct NumberRange(T) if (isScalarType!T)
      */
     void length(T length) @property
     {
-        assert(this.start + length <= this.end, "New length exceeds range length. %s > %s".format(length, this.length));
-        this.end = this.start + length;
+        assert(this.mStart + length <= this.mEnd, "New length exceeds range length. %s > %s".format(length, this.length));
+        this.mEnd = this.mStart + length;
     }
 
     /** 
@@ -227,18 +231,18 @@ struct NumberRange(T) if (isScalarType!T)
         {
             return RangeRelation.Equal;
         }
-        if (first.start >= second.start && first.start <= second.end)
+        if (first.mStart >= second.mStart && first.mStart <= second.mEnd)
         {
-            if (first.end <= second.end)
+            if (first.mEnd <= second.mEnd)
             {
                 return RangeRelation.Nested;
             }
             return RangeRelation.Overlap;
         }
 
-        if (second.start >= first.start && second.start <= first.end)
+        if (second.mStart >= first.mStart && second.mStart <= first.mEnd)
         {
-            if (second.end <= first.end)
+            if (second.mEnd <= first.mEnd)
             {
                 return RangeRelation.Includes;
             }
@@ -261,7 +265,7 @@ struct NumberRange(T) if (isScalarType!T)
         return this.checkRelation(left, right);
     }
     
-    private T start, end;
+    private T mStart, mEnd;
 }
 
 ///

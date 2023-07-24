@@ -281,7 +281,7 @@ shared class LfBlockPool(uint cAlign)
     private void[] mRawMemory;
     private void[] mMemory;
 }
-
+///
 @("LfBlockPool") unittest
 {
     import core.stdc.stdlib;
@@ -321,7 +321,7 @@ shared class LfBlockPool(uint cAlign)
         }
     }
 }
-
+///
 @("LfBlockPool.parallel") unittest
 {
     import std.parallelism;

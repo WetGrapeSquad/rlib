@@ -67,8 +67,7 @@ class Block(uint cAlign)
     alias allocator = MmapAllocator.instance;
     BlockPool!cAlign[uint] mBlocks;
 }
-
-
+///
 @("Block") unittest
 {
     import core.stdc.stdlib;

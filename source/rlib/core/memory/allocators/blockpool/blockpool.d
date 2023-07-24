@@ -243,7 +243,7 @@ class BlockPool(uint cAlign)
     private void[] mRawMemory;
     private void[] mMemory;
 }
-
+///
 @("BlockPool") unittest
 {
     import core.stdc.stdlib;

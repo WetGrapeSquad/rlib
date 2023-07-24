@@ -6,51 +6,49 @@ import std.traits;
  */
 struct BitSlice
 {
+    /** 
+     * Initialize a bit slice by a buffer slice.
+     * Params:
+     *   buffer = buffer of bits
+     */
     this(T)(T[] buffer) if (isBasicType!T)
     {
         this.mBuffer = cast(ubyte[]) buffer;
     }
 
+    /**
+     * Assign a buffer slice.
+     */
     auto opAssign(T)(T[] value) if (isBasicType!T)
     {
         this.mBuffer = cast(ubyte[]) value;
         return this;
     }
 
+    /**
+     * Compare this buffer with other slice by data equality.
+     */
     bool opEquals(R)(const R[] other) const
     if (isBasicType!R)
     {
         ubyte[] right = cast(ubyte[]) other;
-        if (right.length != this.mBuffer.length)
-        {
-            return false;
-        }
-        foreach (i, bright; right)
-        {
-            if (this.mBuffer[i] != bright)
-            {
-                return false;
-            }
-        }
-        return true;
+        return this.mBuffer == right;
     }
 
+    /**
+     * Compare this bit slice with other bit slice
+     */
     bool opEquals(const BitSlice other) const
     {
-        if (other.mBuffer.length != this.mBuffer.length)
-        {
-            return false;
-        }
-        foreach (i, bright; other.mBuffer)
-        {
-            if (this.mBuffer[i] != bright)
-            {
-                return false;
-            }
-        }
-        return true;
+        return this.mBuffer == other.mBuffer;
     }
 
+    /** 
+     * Set `index` bit by `value`.
+     * Params:
+     *   value = bit value
+     *   index = bit index
+     */
     auto opIndexAssign(bool value, size_t index)
     {
         const byteIndex = index / 8;
@@ -68,6 +66,13 @@ struct BitSlice
         return value;
     }
 
+    /** 
+     * Set slice [`start` .. `end`] bits by `value`.
+     * Params:
+     *   value = bit values
+     *   start = start slice index
+     *   end = end slice index
+     */
     auto opSliceAssign(bool value, size_t start, size_t end)
     {
         assert(start < end);
@@ -156,6 +161,11 @@ struct BitSlice
         return value;
     }
     
+    /** 
+     * Set all bits by `value`.
+     * Params:
+     *   value = bit value
+     */
     auto opSliceAssign(bool value)
     {
         if(value)
@@ -169,6 +179,11 @@ struct BitSlice
         return value;
     }
 
+    /** 
+     * Get `index` bit.
+     * Params:
+     *   index = bit index
+     */
     auto opIndex(size_t index)
     {
         const byteIndex = index / 8;
@@ -178,6 +193,11 @@ struct BitSlice
         return (this.mBuffer[byteIndex] & (1 << bitShift)) > 0;
     }
 
+    /** 
+     * Foreach all bits.
+     * Params:
+     *   dg = foreach delegate
+     */
     int opApply(scope int delegate(bool item) dg)
     {
         int result = 0;
@@ -192,6 +212,11 @@ struct BitSlice
         return result;
     }
 
+    /** 
+     * Foreach all bits.
+     * Params:
+     *   dg = foreach delegate
+     */
     int opApply(scope int delegate(size_t index, ref bool item) dg)
     {
         int result = 0;
@@ -237,7 +262,11 @@ struct BitSlice
     assert(check == data1 && check == data2);
 }
 
-
+/** 
+ * Formated write bit array to console
+ * Params:
+ *   data = buffer of bit's to write
+ */
 void bitWrite(T)(T[] data) if (isBasicType!T)
 {
     import io = std.stdio;
@@ -257,6 +286,11 @@ void bitWrite(T)(T[] data) if (isBasicType!T)
     }
 }
 
+/** 
+ * Formated write bit array to console
+ * Params:
+ *   data = buffer of bit's to write
+ */
 void bitWriteln(T)(T[] data) if (isBasicType!T)
 {
     import io = std.stdio;
