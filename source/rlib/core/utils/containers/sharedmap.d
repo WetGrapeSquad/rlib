@@ -2,6 +2,7 @@ module rlib.core.utils.containers.sharedmap;
 import std.traits;
 import core.thread;
 import core.atomic;
+import rlib.core.utils.atomic.spinlock;
 
 //TODO: Refactor and rewrite
 
@@ -10,152 +11,130 @@ shared class Map(K, V, uint cShards = 31) if (isIntegral!K)
     shared struct Shard
     {
         shared V[K] map;
-        shared bool lock;
+        shared AlignedSpinlock mSpinlock;
     }
-
+    
     this()
     {
     }
 
-    private void yield(size_t k)
-    {
-        import core.time;
-
-        if (k < pauseThresh)
-        {
-            return core.atomic.pause();
-        }
-        else if (k < 32)
-        {
-            return Thread.yield();
-        }
-        Thread.sleep(1.msecs);
-    }
-
-    private bool tryLock(ref shared Shard shard)
-    {
-        if (cas(&shard.lock, false, true))
-        {
-            return true;
-        }
-        return false;
-    }
-
-    private void lock(ref shared Shard shard)
-    {
-        if (cas(&shard.lock, false, true))
-        {
-            return;
-        }
-        immutable step = 1 << 1;
-        while (true)
-        {
-            for (size_t n; atomicLoad!(MemoryOrder.raw)(shard.lock); n += step)
-            {
-                this.yield(n);
-            }
-            if (cas(&shard.lock, false, true))
-            {
-                return;
-            }
-        }
-    }
-
-    private void unlock(ref shared Shard shard)
-    {
-        atomicStore!(MemoryOrder.rel)(shard.lock, false);
-    }
-
-    ref auto opIndex(K key)
+    /** 
+    * Get `value` by `key` 
+    * Throws: RangeError if the `key` entry does not exist
+    */
+    ref auto opIndex(K key) 
     {
         auto shard = key % cShards;
 
-        this.lock(this.mShards[shard]);
+        this.mShards[shard].mSpinlock.lock();
         scope (exit)
         {
-            this.unlock(this.mShards[shard]);
+            this.mShards[shard].mSpinlock.unlock();
         }
 
         return (cast(V[K]) this.mShards[shard].map)[key];
     }
 
+    /** 
+    * Set `value` to element by `key` 
+    * Returns: `value`
+    */
     ref auto opIndexAssign(V value, K key)
     {
         auto shard = key % cShards;
 
-        this.lock(this.mShards[shard]);
+        this.mShards[shard].mSpinlock.lock();
         scope (exit)
         {
-            this.unlock(this.mShards[shard]);
+            this.mShards[shard].mSpinlock.unlock();
         }
 
         return (cast(V[K]) this.mShards[shard].map)[key] = value;
     }
 
-    int opApply(scope int delegate(ref const(K), ref V) dg)
+    /** 
+     * Remove an item by `key`.
+     */
+    void remove(K key)
     {
-        int result = 0;
+        auto shard = key % cShards;
 
-        uint index;
-        size_t[31] buffer;
-        size_t[] locked;
-
-        foreach (i, ref shard; this.mShards)
+        this.mShards[shard].mSpinlock.lock();
+        scope (exit)
         {
-            if (!this.tryLock(shard))
-            {
-                buffer[index] = i;
-                ++index;
-                locked = buffer[0 .. index];
-                continue;
-            }
-            scope (exit)
-            {
-                this.unlock(shard);
-            }
-            foreach (ref key, ref value; cast(V[K]) shard.map)
-            {
-                result = dg(key, value);
-                if (result)
-                {
-                    return result;
-                }
-            }
+            this.mShards[shard].mSpinlock.unlock();
         }
 
-        foreach (size_t i; locked)
-        {
-            this.lock(this.mShards[i]);
-            scope (exit)
-            {
-                this.unlock(this.mShards[i]);
-            }
-            foreach (ref key, ref value; cast(V[K]) this.mShards[i].map)
-            {
-                result = dg(key, value);
-                if (result)
-                {
-                    return result;
-                }
-            }
-        }
+        (cast(V[K]) this.mShards[shard].map).remove(key);
+    }
 
-        return result;
+    /** 
+     * Get some element by `key` and return this.
+     * The shard remains in the locked state after the end of 
+     * the call until the moment of call `unlock`
+     */
+    ref auto lockAndGet(K key)
+    {
+        auto shard = key % cShards;
+
+        this.mShards[shard].mSpinlock.lock();
+        return (cast(V[K]) this.mShards[shard].map)[key];
+    }
+
+    /** 
+     * Add/set some element by `key` to `value` and return this.
+     * The shard remains in the locked state after the end of 
+     * the call until the moment of call `unlock`
+     */
+    ref auto lockAndSet(K key, V value)
+    {
+        auto shard = key % cShards;
+
+        this.mShards[shard].mSpinlock.lock();
+        return (cast(V[K]) this.mShards[shard].map)[key] = value;
+    }
+
+    /** 
+     * Remove an item by `key` without attempting to lock it.
+     * Use it only if the lock has already been executed
+     */
+    void lockedRemove(K key)
+    {
+        auto shard = key % cShards;
+        (cast(V[K]) this.mShards[shard].map).remove(key);
+    }
+
+    /** 
+     * Unlock associative shard by key. 
+     * the key is used to calculate the estimated location, i.e. 
+     * the existence of an element of the associative key is 
+     * not necessarily necessary
+     * 
+     * It is not recommended to unlock by key if the lock was not 
+     * performed by this very key in this thread/context before
+     * Params:
+     *   key = some key for element.
+     */
+    void unlock(K key)
+    {
+        auto shard = key % cShards;
+        this.mShards[shard].mSpinlock.unlock();
+    }
+
+    /** 
+     * Completely clears all shards to init state.
+     */
+    void clear()
+    {
+        foreach(ref shard; this.mShards)
+        {
+            shard.mSpinlock.lock();
+            shard.map = null;
+            shard.mSpinlock.unlock();
+        }
     }
 
     shared Shard[31] mShards;
-
-    version (D_InlineAsm_X86)
-        enum X86 = true;
-    else version (D_InlineAsm_X86_64)
-        enum X86 = true;
-    else
-        enum X86 = false;
-
-    static if (X86)
-        enum pauseThresh = 16;
-    else
-        enum pauseThresh = 4;
 }
 
 @("SharedMap")
@@ -171,11 +150,13 @@ unittest
     {
         map[i] = i;
     }
-    foreach (_; 10.iota.parallel(1))
+    
+    // TODO:
+    /*foreach (_; 10.iota.parallel(1))
     {
         foreach (key, value; map)
         {
             assert(key == value);
         }
-    }
+    }*/
 }
