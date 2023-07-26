@@ -1,17 +1,6 @@
 module rlib.core.memory.allocators.common;
 import core.atomic;
 
-// TODO: Refactor and rewrite
-shared static this()
-{
-    import etc.linux.memoryerror;
-
-    static if (is(typeof(registerMemoryErrorHandler)))
-    {
-        registerMemoryErrorHandler();
-    }
-}
-
 /** 
     * A specific function that can be used for structures from scripts.
     * Params:
