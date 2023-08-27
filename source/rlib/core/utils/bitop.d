@@ -1,5 +1,6 @@
-module rlib.core.utils.bitop.bitarray;
+module rlib.core.utils.bitop;
 import std.traits;
+import core.bitop : bsr;
 
 /** 
  * BitSlice - a simple structure that implements an abstraction for working with array bits.
@@ -245,6 +246,8 @@ struct BitSlice
 ///
 @("BitArray") public unittest
 {
+    import rlib.core.utils.bitop: BitSlice;
+
     ubyte[4] data1 = 0;
     ubyte[4] data2 = ubyte.max;
     ubyte[4] check = [0b10000000, 0b00000111, 0b10000000, 0b00000001];
@@ -297,4 +300,130 @@ void bitWriteln(T)(T[] data) if (isBasicType!T)
 
     bitWrite(data);
     io.writeln;
+}
+
+
+/** 
+ * Calculates the number of bits needed to write the number `x`
+ * Params:
+ *   x = number for calculation
+ * Returns: number of bits.
+ */
+pragma(inline, true)
+int bitWidth(uint x)
+{
+    if (x <= 1)
+    {
+        return 1;
+    }
+    return bsr(x) + 1;
+}
+/// ditto
+pragma(inline, true)
+long bitWidth(ulong x)
+{
+    if (x <= 1)
+    {
+        return 1;
+    }
+    return bsr(x) + 1;
+}
+///
+@("bitWidth")
+unittest
+{
+    import rlib.core.utils.bitop: bitWidth;
+
+    assert(bitWidth(0) == 1); //0b0
+    assert(bitWidth(1) == 1); //0b1
+    assert(bitWidth(2) == 2); //0b10
+    assert(bitWidth(3) == 2); //0b11
+    assert(bitWidth(4) == 3); //0b100
+    assert(bitWidth(5) == 3); //0b101
+    assert(bitWidth(6) == 3); //0b110
+    assert(bitWidth(7) == 3); //0b111
+    assert(bitWidth(8) == 4); //0b1000
+    assert(bitWidth(9) == 4); //0b1001
+}
+
+/** 
+ * The nearest upper power of two 
+ * Returns: the minimum number `i >= x` is such that there exists `i = 2^^N'. Exceptions `x = 0 => i = 0`.
+ */
+pragma(inline, true)
+int bitCeil(uint x)
+{
+    if ((x & (x - 1)) == 0)
+    {
+        return x;
+    }
+    return 1 << bitWidth(x - 1);
+}
+/// ditto
+pragma(inline, true)
+long bitCeil(ulong x)
+{
+    if ((x & (x - 1)) == 0)
+    {
+        return x;
+    }
+    return 1 << bitWidth(x - 1);
+}
+///
+@("bitCeil")
+unittest
+{
+    import rlib.core.utils.bitop: bitCeil;
+    
+    assert(bitCeil(0) == 0); // exceptions
+    assert(bitCeil(1) == 1); // 2^0
+    assert(bitCeil(2) == 2); // 2^1
+    assert(bitCeil(3) == 4); // 2^2
+    assert(bitCeil(4) == 4); // 2^2
+    assert(bitCeil(5) == 8); // 2^3
+    assert(bitCeil(6) == 8); // 2^3
+    assert(bitCeil(7) == 8); // 2^3
+    assert(bitCeil(8) == 8); // 2^3
+    assert(bitCeil(9) == 16); // 2^4
+}
+
+/** 
+ * The nearest lower power of two 
+ * Returns: the maximum number `i <= x` is such that there exists `i = 2^^N'. Exceptions `x = 0 => i = 0`.
+ */
+pragma(inline, true)
+int bitFloor(uint x)
+{
+    if (x == 0)
+    {
+        return 0;
+    }
+    return 1 << (bitWidth(x) - 1);
+}
+/// ditto
+pragma(inline, true)
+long bitFloor(ulong x)
+{
+    if (x == 0)
+    {
+        return 0;
+    }
+    return 1 << (bitWidth(x) - 1);
+}
+///
+@("bitFloor")
+unittest
+{
+    import rlib.core.utils.bitop: bitFloor;
+    
+    assert(bitFloor(0) == 0); // exceptions
+    assert(bitFloor(1) == 1); // 2^0
+    assert(bitFloor(2) == 2); // 2^1
+    assert(bitFloor(3) == 2); // 2^1
+    assert(bitFloor(4) == 4); // 2^2
+    assert(bitFloor(5) == 4); // 2^2
+    assert(bitFloor(6) == 4); // 2^2
+    assert(bitFloor(7) == 4); // 2^2
+    assert(bitFloor(8) == 8); // 2^3
+    assert(bitFloor(9) == 8); // 2^3
 }

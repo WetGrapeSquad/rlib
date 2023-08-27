@@ -1,42 +1,45 @@
 {
-	"-ddoxFilterArgs": [
-		"--unittest-examples",
-		"--min-protection=Protected",
-		"--in", "rlib.",
-		"--ex", "erupted",
-		"--ex", "silly"
-	],
-	"authors": [
-		"Gedert Korney"
-	],
-	"configurations": [
-		{
-			"excludedSourceFiles": [
-				"source/app.d"
-			],
-			"name": "library",
-			"targetType": "library"
-		},
-		{
-			"excludedSourceFiles": [
-				"source/app.d"
-			],
-			"name": "import",
-			"sourceFiles-posix": [
-				"librlib.a"
-			],
-			"sourceFiles-windows": [
-				"rlib.lib"
-			],
-			"targetType": "sourceLibrary"
-		}
-	],
-	"dependencies": {
-		"semver": "~>0.5.0",
-		"singlog": "~>0.5.0",
-		"erupted": "~>2.1.98",
-		"silly": "~>1.1.1"
-	},
-	"license": "MIT",
-	"name": "rlib"
+    "-ddoxFilterArgs": [
+        "--unittest-examples",
+        "--min-protection=Public",
+        "--in",
+        "rlib",
+        "--ex",
+        "erupted",
+        "--ex",
+        "silly"
+    ],
+    "authors": [
+        "Gedert Korney"
+    ],
+    "configurations": [
+        {
+            "excludedSourceFiles": [
+                "source/app.d"
+            ],
+            "name": "library",
+            "targetType": "library"
+        },
+        {
+            "excludedSourceFiles": [
+                "source/app.d"
+            ],
+            "name": "import",
+            "sourceFiles-posix": [
+                "librlib.a"
+            ],
+            "sourceFiles-windows": [
+                "rlib.lib"
+            ],
+            "targetType": "sourceLibrary"
+        }
+    ],
+    "dependencies": {
+        "semver": "~>0.5.0",
+        "singlog": "~>0.5.0",
+        "erupted": "~>2.1.98",
+        "silly": "~>1.1.1"
+    },
+    "license": "MIT",
+    "name": "rlib"
 }

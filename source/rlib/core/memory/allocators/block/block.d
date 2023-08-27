@@ -70,10 +70,11 @@ class Block(uint cAlign)
 ///
 @("Block") unittest
 {
+    import rlib.core.memory.allocators.block.block: Block;
     import core.stdc.stdlib;
     import std.format;
 
-    ubyte[][] ptr = new ubyte[][10_000]; 
+    ubyte[][] ptr = new ubyte[][1_000]; 
 
     Block!16 pool = new Block!16(16, null);
 

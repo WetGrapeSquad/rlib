@@ -16,30 +16,3 @@ version(D_Coverage) shared static this() {
     }
     dmd_coverDestPath(COVPATH); // Now all *.lst files are written into ./coverage/ directory
 }
-
-version(unittest)
-{
-    enum LogFileName = "./logs.txt";
-
-    shared static this()
-    {   
-        import std.file;
-        import singlog;
-        log.output(log.output.syslog.stderr.stdout.file)    // write to syslog, standard error/output streams and file
-            .level(log.level.debugging)                   // logging level
-            .color(true)                                    // color text output
-            .file(LogFileName);
-        if(!LogFileName.exists || !isFile(LogFileName))
-        {
-            
-        }
-        
-        log.alert("Test");
-        log.critical("Test");
-        log.error("Test");
-        log.warning("Test");
-        log.notice("Test");
-        log.information("Test");
-        log.debugging("Test");
-    }
-}

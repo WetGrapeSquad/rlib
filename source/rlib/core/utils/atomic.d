@@ -1,12 +1,149 @@
-module rlib.core.utils.atomic.type;
-import core.atomic : atomicFetchAdd, atomicFetchSub, atomicLoad, atomicOp, atomicStore;
+module rlib.core.utils.atomic;
+import core.atomic;
+import core.thread : Thread;
+import core.time;
 import std.algorithm : canFind;
 import std.conv : to;
 import std.string : split;
 import std.traits : CommonType, isBasicType, isImplicitlyConvertible;
 
 /** 
- * Hellper wrapper make data unshared in shared scope.
+ * A synchronization primitive that ensures mutual exclusion of execution of critical code sections
+ */
+shared struct Spinlock
+{
+    enum Contention
+    {
+        Brief,
+        Medium,
+        Lengthy
+    }
+
+    this(Contention contention)
+    {
+        this.mContention = contention;
+    }
+
+    private void yield(size_t k)
+    {
+
+        if (k < pauseThread)
+        {
+            return core.atomic.pause();
+        }
+        else if (k < 32)
+        {
+            return Thread.yield();
+        }
+        Thread.sleep(1.msecs);
+    }
+
+    /** 
+    * Try to puts spinlock in an blocked state
+    * Returns: true, if operation was success
+    */
+    bool tryLock()
+    {
+        if (cas(&mLock, false, true))
+        {
+            return true;
+        }
+        return false;
+    }
+
+    /** 
+    * Puts spinlock in an blocked state
+    */
+    void lock()
+    {
+        if (cas(&mLock, false, true))
+        {
+            return;
+        }
+
+        immutable pause = 1 << this.mContention;
+
+        while (true)
+        {
+            for (size_t n; atomicLoad!(MemoryOrder.raw)(mLock); n += pause)
+            {
+                this.yield(n);
+            }
+            if (cas(&mLock, false, true))
+            {
+                return;
+            }
+        }
+    }
+
+    /** 
+    * Puts spinlock in an unblocked state
+    */
+    void unlock()
+    {
+        atomicStore!(MemoryOrder.rel)(mLock, false);
+    }
+
+    version (X86)
+    {
+        enum X86 = true;
+    }
+    else version (X86_64)
+    {
+        enum X86 = true;
+    }
+    else
+    {
+        enum X86 = false;
+    }
+    static if (X86)
+    {
+        enum pauseThread = 16;
+    }
+    else
+    {
+        enum pauseThread = 16;
+    }
+
+    private Contention mContention;
+    private shared bool mLock;
+}
+
+/** 
+ * Spinlock aligned by cash-line (64)
+ */
+align(64)
+struct AlignedSpinlock
+{
+
+    this(Spinlock.Contention contention)
+    {
+        this.__lock__ = Spinlock(contention);
+    }
+
+    Spinlock __lock__;
+    alias __lock__ this;
+}
+
+///
+@("Spinlock")
+unittest
+{
+    int a = 0;
+    Spinlock sl;
+
+    foreach (_; 0 .. 1_000)
+    {
+        sl.lock();
+        a++;
+        sl.unlock();
+    }
+
+    assert(a == 1_000);
+}
+
+/** 
+ * Helper wrapper make data unshared in shared scope.
  * Warning: this wrapper is not thread safe.
  */
 shared struct UnShared(T)

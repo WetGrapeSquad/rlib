@@ -1,6 +1,6 @@
 module rlib.core.memory.allocators.block.lfblock;
 import rlib.core.memory.allocators.blockpool.lfblockpool;
-import rlib.core.utils.containers.sharedmap;
+import rlib.core.utils.containers;
 import std.experimental.allocator.mmap_allocator;
 import std.traits;
 import core.lifetime;

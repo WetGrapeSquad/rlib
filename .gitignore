@@ -49,3 +49,5 @@ dub.selections.json
 .ionide
 
 # End of https://www.toptal.com/developers/gitignore/api/d,visualstudiocode
+
+*logs.txt

@@ -302,6 +302,7 @@ shared class SharedBlockPool(uint cAlign)
 ///
 @("SharedBlockPool.parallel") unittest
 {
+    import rlib.core.memory.allocators.blockpool.sharedblockpool: SharedBlockPool;
     import std.parallelism;
     import std.concurrency;
 
