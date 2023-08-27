@@ -1,4 +1,4 @@
-module rlib.core.utils.ranges.number;
+module rlib.core.utils.ranges;
 import std.traits;
 import core.internal.spinlock;
 debug import std.format: format;
@@ -306,6 +306,8 @@ struct NumberRange(T) if (isScalarType!T)
 ///
 @("NumberRange") unittest
 {
+    import rlib.core.utils.ranges: NumberRange;
+
     auto test1 = NumberRange!int(3, 1), test2 = NumberRange!int(1, 3);
 
     assert(test1 == test2);

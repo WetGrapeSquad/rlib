@@ -246,6 +246,7 @@ class BlockPool(uint cAlign)
 ///
 @("BlockPool") unittest
 {
+    import rlib.core.memory.allocators.blockpool.blockpool: BlockPool;
     import core.stdc.stdlib;
 
     void freeDel(void[] ptr)

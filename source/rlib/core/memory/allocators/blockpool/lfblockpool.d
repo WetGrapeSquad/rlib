@@ -324,6 +324,7 @@ shared class LfBlockPool(uint cAlign)
 ///
 @("LfBlockPool.parallel") unittest
 {
+    import rlib.core.memory.allocators.blockpool.lfblockpool: LfBlockPool;
     import std.parallelism;
     import std.concurrency;
     import core.stdc.stdlib;
