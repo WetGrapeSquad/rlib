@@ -97,6 +97,6 @@ shared class PhysicalDevice
 @("PhysicalDevice")
 unittest
 {
-    Instance instance = new Instance(gVkHeaderVersion);
+    Instance instance = new Instance(Instance.getSupportVersion);
     PhysicalDevice[] devices = PhysicalDevice.enumeratePhysicalDevices(instance);
 }

@@ -146,6 +146,11 @@ class Instance
         return errors;
     }
 
+    static SemVer getSupportVersion()
+    {
+        return cast(SemVer)((gVkHeaderVersion < gPlatformVkVer) ? gVkHeaderVersion: gPlatformVkVer);
+    }
+
     ~this()
     {
         if (this.mInstanced)
@@ -174,7 +179,7 @@ unittest
     }
     catch (Exception)
     {
-        SemVer ver = cast(SemVer)((gVkHeaderVersion < gPlatformVkVer) ? gVkHeaderVersion: gPlatformVkVer);
+        SemVer ver = Instance.getSupportVersion;
         Instance instance1 = new Instance(ver);
         Instance instance2 = new Instance(ver);
         __delete(instance1);
