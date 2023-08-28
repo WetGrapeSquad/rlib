@@ -94,6 +94,7 @@ shared class PhysicalDevice
     private shared VkPhysicalDevice mVkPhysicalDevice;
 }
 
+@("PhysicalDevice")
 unittest
 {
     Instance instance = new Instance(gVkHeaderVersion);
