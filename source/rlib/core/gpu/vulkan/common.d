@@ -17,7 +17,7 @@ package uint toVkVersion(string verString)
         ver.query(VersionPart.PATCH));
 }
 
-package uint toVkVersion(SemVer ver)
+package uint toVkVersion(const SemVer ver)
 {
     return VK_MAKE_API_VERSION(0,
         ver.query(VersionPart.MAJOR),

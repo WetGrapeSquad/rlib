@@ -10,7 +10,7 @@ import semver;
 package import erupted;
 package import erupted.vulkan_lib_loader;
 
-enum gVkHeaderVersion = vkVersionToSemVer(VK_HEADER_VERSION_COMPLETE);
+__gshared const SemVer gVkHeaderVersion;
 
 __gshared const SemVer gPlatformVkVer;
 __gshared bool gVkLoaded;
@@ -18,7 +18,8 @@ __gshared bool gVkLoaded;
 shared static this()
 {
     uint tmp;
-
+    
+    gVkHeaderVersion = vkVersionToSemVer(VK_HEADER_VERSION_COMPLETE);
     if (loadGlobalLevelFunctions)
     {
         gVkLoaded = true;
@@ -39,7 +40,7 @@ shared static this()
 class Instance
 {
     this(
-        SemVer reqVer,
+        const SemVer reqVer,
         string engName = null, SemVer engVersion = SemVer(0, 0, 0),
         string appName = null, SemVer appVer = SemVer(0, 0, 0)
     )
@@ -123,7 +124,7 @@ class Instance
      * Checks `reqVer` for compatibility with vulkan header and platform.
      * Returns: null if no errors, or error list.
      */
-    static string[] checkVersions(SemVer reqVer)
+    static string[] checkVersions(const SemVer reqVer)
     {
         string[] errors = null;
 
@@ -139,10 +140,15 @@ class Instance
         {
             string message =
                 "The engine tries to work with version of vulkan (%s) above the version supported by the platform (%s)";
-            message = message.format(gPlatformVkVer, reqVer);
+            message = message.format(reqVer, gPlatformVkVer);
             errors ~= message;
         }
         return errors;
+    }
+
+    static SemVer getSupportVersion()
+    {
+        return cast(SemVer)((gVkHeaderVersion < gPlatformVkVer) ? gVkHeaderVersion: gPlatformVkVer);
     }
 
     ~this()
@@ -173,8 +179,9 @@ unittest
     }
     catch (Exception)
     {
-        Instance instance1 = new Instance(gVkHeaderVersion);
-        Instance instance2 = new Instance(gVkHeaderVersion);
+        SemVer ver = Instance.getSupportVersion;
+        Instance instance1 = new Instance(ver);
+        Instance instance2 = new Instance(ver);
         __delete(instance1);
         __delete(instance2);
         return;
