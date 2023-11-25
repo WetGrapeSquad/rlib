@@ -17,11 +17,12 @@ import std.range.primitives;
 import std.traits;
 import core.exception;
 
+// TODO: Make Refactor
 template isAssignable(F, T)
 {
     enum isAssignable = is(typeof((T el1 = T.init, F el2 = F.init) { el1 = el2; }()));
 }
-
+// TODO: Make Refactor
 template isConstructableWith(T, Args...)
 {
     static if (Args.length == 1)
@@ -36,10 +37,11 @@ template isConstructableWith(T, Args...)
 
 // FIXME: Add ref for struct's for improve prefomance.
 // FIXME: Add assertions and document it.
+// FIXME: Refactor opIndex and opIndexAssign
 /** 
  * Implementation of a dynamic array.
  * 
- * This structure automatically reserves memory by a factor of 1.5 and reduces the size when it is reduced by 1.5 times.
+ * This structure automatically reserves memory by default factor of 1.5 and reduces the size when it is reduced by 1.5 times.
  * About factor: <a href="https://github.com/facebook/folly/blob/main/folly/docs/FBVector.md#memory-handling">FBVector Memory Handling</a>
  * 
  * Does't work in CTFE, for this recommended to use standart array's like `T[]`.
@@ -84,7 +86,8 @@ template isConstructableWith(T, Args...)
  * assert(array1[] is null);
  * ---------------
  */
-struct Array(T, allocator = PickDefaultAllocator!T) if (CheckAllocatorForType!(T, allocator))
+struct Array(T, allocator = PickDefaultAllocator!T, double growFactor = 1.5)
+        if (CheckAllocatorForType!(T, allocator))
 {
     /** 
      * Copy constructor for some Array!(R, alloc).
@@ -128,7 +131,8 @@ struct Array(T, allocator = PickDefaultAllocator!T) if (CheckAllocatorForType!(T
      *
      * Throws: OutOfMemoryError when memory allocation fails
      */
-    this(R, alloc)(ref const(Array!(R, alloc)) array) if (isConstructableWith!(T, R))
+    this(R, alloc)(ref const(Array!(R, alloc)) array)
+            if (isConstructableWith!(T, R))
     {
         this.opAssign(array);
     }
@@ -159,7 +163,8 @@ struct Array(T, allocator = PickDefaultAllocator!T) if (CheckAllocatorForType!(T
      *   data = array to copy
      * Throws: OutOfMemoryError when memory allocation fails
      */
-    ref auto opAssign(R, alloc)(ref const(Array!(R, alloc)) data) if (is(isConstructableWith!(T, R)))
+    ref auto opAssign(R, alloc)(ref const(Array!(R, alloc)) data)
+            if (is(isConstructableWith!(T, R)))
     {
         if (this is data)
         {
@@ -182,7 +187,8 @@ struct Array(T, allocator = PickDefaultAllocator!T) if (CheckAllocatorForType!(T
     }
 
     /// ditto
-    ref auto opAssign(R)(R data) if (isInputRange!R && isConstructableWith!(T, ForeachType!R))
+    ref auto opAssign(R)(R data)
+            if (isInputRange!R && isConstructableWith!(T, ForeachType!R))
     {
         static assert(!isInfinite!R, "Are you serious? Do you want to say goodbye to your memory?");
 
@@ -248,7 +254,7 @@ struct Array(T, allocator = PickDefaultAllocator!T) if (CheckAllocatorForType!(T
             {
                 static if (!hasLength!R)
                 {
-                    if(this._length < i)
+                    if (this._length < i)
                     {
                         this.resize_unitialized!false(i + 1);
                     }
@@ -256,7 +262,7 @@ struct Array(T, allocator = PickDefaultAllocator!T) if (CheckAllocatorForType!(T
                 this.initBy(i, el);
                 i++;
             }
-            if(this._length != i)
+            if (this._length != i)
             {
                 this.resize_unitialized!false(i);
             }
@@ -290,11 +296,19 @@ struct Array(T, allocator = PickDefaultAllocator!T) if (CheckAllocatorForType!(T
     }
 
     /// ditto
-    ref auto opOpAssign(string op : "~", R)(R data) if (isInputRange!R && isConstructableWith!(T, ForeachType!R))
+    ref auto opOpAssign(string op : "~", R)(R data)
+            if (isInputRange!R && isConstructableWith!(T, ForeachType!R))
     {
         static assert(!isInfinite!R, "Are you serious? Do you want to say goodbye to your memory?");
 
         this.insert(this._length, data);
+        return this;
+    }
+
+    ref auto opOpAssign(string op : "~", R)(R data)
+            if (!isInputRange!R && isConstructableWith!(T, R))
+    {
+        this.insert(this._length, (&data)[0 .. 1]);
         return this;
     }
 
@@ -457,7 +471,7 @@ struct Array(T, allocator = PickDefaultAllocator!T) if (CheckAllocatorForType!(T
     /** 
      * Assigns the `value` to the `index` element of the array.
      */
-    auto opIndexAssign(R)(R value, size_t index) if (is(typeof(this._data[0] = value)))
+    auto opIndexAssign(R)(R value, size_t index) if (isConstructableWith!(T, R))
     {
         *cast(T*)&this._data[index * T.sizeof] = value;
         return value;
@@ -466,7 +480,8 @@ struct Array(T, allocator = PickDefaultAllocator!T) if (CheckAllocatorForType!(T
     /** 
      * `op` assign the `value` to the `index` element of the array.
      */
-    auto opIndexOpAssign(string op, T)(T value, size_t index) if (is(typeof(mixin("this.mData[index] " ~ op ~ "= value"))))
+    auto opIndexOpAssign(string op, T)(T value, size_t index)
+            if (is(typeof(mixin("this.mData[index] " ~ op ~ "= value"))))
     {
         return mixin("*cast(T*)&this._data[index * T.sizeof] " ~ op ~ "= value;");
         return value;
@@ -617,7 +632,8 @@ struct Array(T, allocator = PickDefaultAllocator!T) if (CheckAllocatorForType!(T
         {
             return null;
         }
-        assert(end <= this._length, text('[', start, "..", end, "] extends past source array of length ", this._length));
+        assert(end <= this._length, text('[', start, "..", end, "] extends past source array of length ", this
+                ._length));
         return cast(T[]) this._data[start * T.sizeof .. end * T.sizeof];
     }
     /// ditto
@@ -632,7 +648,8 @@ struct Array(T, allocator = PickDefaultAllocator!T) if (CheckAllocatorForType!(T
         {
             return null;
         }
-        assert(end <= this._length, text('[', start, "..", end, "] extends past source array of length ", this._length));
+        assert(end <= this._length, text('[', start, "..", end, "] extends past source array of length ", this
+                ._length));
         return cast(const(T)[]) this._data[start * T.sizeof .. end * T.sizeof];
     }
     /// ditto
@@ -692,7 +709,8 @@ struct Array(T, allocator = PickDefaultAllocator!T) if (CheckAllocatorForType!(T
     }
 
     /// ditto
-    ref auto insert(R)(size_t pos, R data) if (isInputRange!R && isConstructableWith!(T, ForeachType!R))
+    ref auto insert(R)(size_t pos, R data)
+            if (isInputRange!R && isConstructableWith!(T, ForeachType!R))
     {
         static assert(!isInfinite!R, "Are you serious? Do you want to say goodbye to your memory?");
 
@@ -820,7 +838,7 @@ struct Array(T, allocator = PickDefaultAllocator!T) if (CheckAllocatorForType!(T
 
     ref auto remove(size_t el)
     {
-        if(hasElaborateDestructor!T)
+        if (hasElaborateDestructor!T)
         {
             destroy!false(this[el]);
         }
@@ -831,9 +849,9 @@ struct Array(T, allocator = PickDefaultAllocator!T) if (CheckAllocatorForType!(T
 
     ref auto remove(size_t start, size_t end)
     {
-        if(hasElaborateDestructor!T)
+        if (hasElaborateDestructor!T)
         {
-            foreach(ref el; this[start .. end])
+            foreach (ref el; this[start .. end])
             {
                 destroy!false(el);
             }
@@ -893,13 +911,15 @@ struct Array(T, allocator = PickDefaultAllocator!T) if (CheckAllocatorForType!(T
      */
     bool resize(size_t size)
     {
-        bool grow = this._length < size;
-        bool resized = this.resize_unitialized(size);
+        const oldLength = this._length;
+
+        const grow = oldLength < size;
+        const resized = this.resize_unitialized(size);
 
         if (resized && grow)
         {
             // Initialize memory.
-            T[] obj = cast(T[]) this._data[this._length * T.sizeof .. size * T.sizeof];
+            T[] obj = cast(T[]) this._data[oldLength * T.sizeof .. size * T.sizeof];
             initializeAll(obj);
         }
         return resized;
@@ -942,11 +962,11 @@ struct Array(T, allocator = PickDefaultAllocator!T) if (CheckAllocatorForType!(T
         {
             return true;
         }
-        if (!Realloc!(void[], allocator)(this._data, cast(size_t)(this._minSize * T.sizeof * 1.5)))
+        if (!Realloc!(void[], allocator)(this._data, cast(size_t)(this._minSize * T.sizeof * growFactor)))
         {
             return false;
         }
-        this._minSize = cast(size_t)(this._minSize / 1.5);
+        this._minSize = cast(size_t)(this._minSize / growFactor);
         return true;
     }
 
@@ -958,7 +978,7 @@ struct Array(T, allocator = PickDefaultAllocator!T) if (CheckAllocatorForType!(T
      */
     static private size_t goodCapacity(size_t capacity)
     {
-        return cast(size_t) ceil(1.5 ^^ (ceil(log2(cast(double) capacity) / log2(1.5))));
+        return cast(size_t) ceil(growFactor ^^ (ceil(log2(cast(double) capacity) / log2(growFactor))));
     }
 
     /** 
@@ -1019,7 +1039,8 @@ struct Array(T, allocator = PickDefaultAllocator!T) if (CheckAllocatorForType!(T
      *   to = init to
      *   array = init data
      */
-    private void initBy(bool _destroy = true, R)(size_t from, size_t to, R[] array) if (isConstructableWith!(T, R))
+    private void initBy(bool _destroy = true, R)(size_t from, size_t to, R[] array)
+            if (isConstructableWith!(T, R))
     {
         assert((to - from) == array.length);
         static if (_destroy && hasElaborateDestructor!T)
@@ -1031,18 +1052,18 @@ struct Array(T, allocator = PickDefaultAllocator!T) if (CheckAllocatorForType!(T
         }
 
         // struct with elaborate assign
-        static if(is(T == struct) && hasElaborateAssign!T && is(typeof(emplace(&this[0], array[0])))) // struct with elaborate assign
+        static if (is(T == struct) && hasElaborateAssign!T && is(typeof(emplace(&this[0], array[0])))) // struct with elaborate assign
         {
-            foreach (i, ref obj; this[from .. to])
-            {
-                emplace(&obj, array[i]);
+                foreach (i, ref obj; this[from .. to])
+                    {
+                    emplace(&obj, array[i]);
+                }
             }
-        }
         else // struct without elaborate assign or basic type 
         {
-            // small optimization
-            safeMoveRaw((cast(Unqual!R[])array), this[from .. to]);
-        }
+                // small optimization
+                safeMoveRaw((cast(Unqual!R[]) array), this[from .. to]);
+            }
     }
 
     /** 
@@ -1051,7 +1072,8 @@ struct Array(T, allocator = PickDefaultAllocator!T) if (CheckAllocatorForType!(T
      *   index = index of element.
      *   el = data for initialization.
      */
-    private void initBy(bool _destroy = true, R)(size_t index, ref const R el) if (isConstructableWith!(T, R))
+    private void initBy(bool _destroy = true, R)(size_t index, ref const R el)
+            if (isConstructableWith!(T, R))
     {
         static if (_destroy && hasElaborateDestructor!T)
         {
@@ -1059,15 +1081,15 @@ struct Array(T, allocator = PickDefaultAllocator!T) if (CheckAllocatorForType!(T
         }
 
         // struct with elaborate assign
-        static if(is(T == struct) && hasElaborateAssign!T && is(typeof(emplace(&this[0], array[0])))) // struct with elaborate assign
+        static if (is(T == struct) && hasElaborateAssign!T && is(typeof(emplace(&this[0], array[0])))) // struct with elaborate assign
         {
-            emplace(&this[index], el);
-        }
+                emplace(&this[index], el);
+            }
         else // struct without elaborate assign or basic type
         {
-            // small optimization
-            safeMoveRaw((cast(Unqual!R[])(&el)[0..1]), this[index .. index + 1]);
-        }
+                // small optimization
+                safeMoveRaw((cast(Unqual!R[])(&el)[0 .. 1]), this[index .. index + 1]);
+            }
     }
 
     void clear()
@@ -1208,320 +1230,204 @@ unittest
 
         array ~= array;
         assert(Counter._counter == 0, text("Destructed: ", Counter._counter));
-        
+
         array.remove(2);
         assert(Counter._counter == 1, text("Destructed: ", Counter._counter));
 
-        array.remove(array[2..5]);
-        assert(Counter._counter == 4, text("Destructed: ", Counter._counter));   
+        array.remove(array[2 .. 5]);
+        assert(Counter._counter == 4, text("Destructed: ", Counter._counter));
     }
 
-    assert(Counter._counter == 20, text("Destructed: ", Counter._counter));   
+    assert(Counter._counter == 20, text("Destructed: ", Counter._counter));
 }
 
-/** 
- * Implementation of a dynamic list.
- * 
- * This structure uses ownership semantics,
- * what distinguishes this structure from embedded lists:
- *  <ul>
- *      <li>With `List!T list1, list2', the operation `list1 = list2` 
- *          transfers the list from `list2` to `list1`</li>
- *      <li>With some Range `TestRange` and `List!T list`, the operation `list = TestMessage` 
- *          creates a new list.</li>
- *      <li>With `string TestMessage` and `List!char list`, the operation `list = TestMessage` 
- *          creates a new list.</li>
- *  </ul> 
+/**
+ * Implementation of a sparseset
+ *
+ * <b>It is not recommended for use for large numbers.</b>
+ * Two arrays sparse and dense are used for implementation. 
+ * Sparse is equal to the size of the largest element (numeric value) (only growing). 
+ * Danse has a size equal to the number of SparseSet elements. 
+ * <ul>
+ *      <li> The size of the occupied memory is O(n+i), where n is the number of elements, and i is the largest index. </li>
+ *      <li> At best, adding/removing an element equals O(1), at worst O(n+i)(when dynamically resizing SparseSet). </li>
+ *      <li> Checking for the presence(contain) of the O(1) element. </li>
+ *      <li> Cleaning SparseSet O(1) </li>
+ * </ul>
  * ---------------
- * import rlib.core.utils.containers: List;
+ * import rlib.core.utils.containers: SparseSet;
  * 
- * string testMessage = "test message";
- * List!char list1, list2; 
- * 
- * list2 = testMessage;      // Created a copy of the list
- * list1 = list2;            // Moved the list from list2 to list1
- * 
- * assert(list2.empty());
- * assert(list1 == testMessage);
+ * SparseSet!int test;
+ *
+ * test.add(1);
+ * test.add(2);
+ * test.add(4);
+ * test.add(5);
+ *
+ * assert(!test.has(0));
+ * assert(test.has(1));
+ * assert(test.has(2));
+ * assert(!test.has(3));
+ * assert(test.has(4));
+ * assert(test.has(5));
+ * assert(!test.has(6));
+ *
+ * test.remove(2);
+ *
+ * assert(!test.has(0));
+ * assert(test.has(1));
+ * assert(!test.has(2));
+ * assert(!test.has(3));
+ * assert(test.has(4));
+ * assert(test.has(5));
+ * assert(!test.has(6));
+ *
+ * test.clear();
+ *
+ * assert(!test.has(0));
+ * assert(!test.has(1));
+ * assert(!test.has(2));
+ * assert(!test.has(3));
+ * assert(!test.has(4));
+ * assert(!test.has(5));
+ * assert(!test.has(6));
+ *
  * ---------------
  */
-
-//TODO: Refactor and rewrite
-
-/** 
- * Implementation of a shared map based on GC Map.
- * 
- * This structure does not use ownership semantics. The task of this structure is to quickly read and write to the map.
- * This is done by splitting the Map into shards, which correspond to certain ranges of values.
- * By default, in SharedMap 31 shards, you can specify any number, but it is recommended to use prime
- * numbers (for example: 3, 11, 23, 31, etc.). This implementation of SharedMap must meet the following requirements:
- *  <ul>
- *      <li>Secure and fast getting/adding keys/values to SharedMap. Therefore, SharedMap uses SpinLock to lock shards.
- *          </li>
- *      <li>The ability to lock the shard to change a specific element, with the possibility of deletion. This is 
- *          achieved by using the methods `lockAndGet`, `lockAndSet`, `unlock`, `lockedRemove'.</li>
- *      <li>If you are missing something, we are open to suggestions and pull requests</li>
- *  </ul> 
- */
-shared class SharedMap(K, V, uint cShards = 31) if (isIntegral!K)
+struct SparseSet(V) if (isBasicType!V)
 {
-    struct Shard
+    void add(V element)
     {
-        V[K] map;
-        AlignedSpinlock mSpinlock;
-    }
-
-    this(Spinlock.Contention contention = Spinlock.Contention.Brief)
-    {
-        if (contention != Spinlock.Contention.Brief)
+        if(this.contain(element))
         {
-            foreach (ref shard; this.mShards)
-            {
-                shard.mSpinlock = AlignedSpinlock(contention);
-            }
+            return;
         }
-    }
-
-    /** 
-    * Get `value` by `key` 
-    * Throws: RangeError if the `key` entry does not exist
-    */
-    ref auto opIndex(K key)
-    {
-        auto shard = key % cShards;
-
-        this.mShards[shard].mSpinlock.lock();
-        scope (exit)
+        if (sparse.length <= element)
         {
-            this.mShards[shard].mSpinlock.unlock();
+            sparse.length = element + 1;
         }
-
-        return this.mShards[shard].map[key];
+        this.sparse[element] = cast(V) this.dense.length;
+        this.dense ~= element;
     }
 
-    /** 
-    * Set `value` to element by `key` 
-    * Returns: `value`
-    */
-    ref auto opIndexAssign(V value, K key)
+    bool contain(V element)
     {
-        auto shard = key % cShards;
-
-        this.mShards[shard].mSpinlock.lock();
-        scope (exit)
+        if (this.sparse.length <= element ||
+            this.dense.length <= this.sparse[element] ||
+            this.dense[this.sparse[element]] != element)
         {
-            this.mShards[shard].mSpinlock.unlock();
+            return false;
         }
-
-        return this.mShards[shard].map[key] = value;
+        return true;
     }
 
-    /** 
-     * Remove an item by `key`.
-     */
-    void remove(K key)
-    {
-        auto shard = key % cShards;
-
-        this.mShards[shard].mSpinlock.lock();
-        scope (exit)
-        {
-            this.mShards[shard].mSpinlock.unlock();
-        }
-
-        this.mShards[shard].map.remove(key);
-    }
-
-    /** 
-     * Get some element by `key` and return this.
-     * The shard remains in the locked state after the end of 
-     * the call until the moment of call `unlock`
-     */
-    ref auto lockAndGet(K key)
-    {
-        auto shard = key % cShards;
-
-        this.mShards[shard].mSpinlock.lock();
-        return this.mShards[shard].map[key];
-    }
-
-    /** 
-     * Add/set some element by `key` to `value` and return this.
-     * The shard remains in the locked state after the end of 
-     * the call until the moment of call `unlock`
-     */
-    ref auto lockAndSet(K key, V value)
-    {
-        auto shard = key % cShards;
-
-        this.mShards[shard].mSpinlock.lock();
-        return this.mShards[shard].map[key] = value;
-    }
-
-    /** 
-     * Remove an item by `key` without attempting to lock it.
-     * Use it only if the lock has already been executed
-     */
-    void lockedRemove(K key)
-    {
-        auto shard = key % cShards;
-        this.mShards[shard].map.remove(key);
-    }
-
-    /** 
-     * Unlock associative shard by key. 
-     * the key is used to calculate the estimated location, i.e. 
-     * the existence of an element of the associative key is 
-     * not necessarily necessary
-     * 
-     * It is not recommended to unlock by key if the lock was not 
-     * performed by this very key in this thread/context before
-     * Params:
-     *   key = some key for element.
-     */
-    void unlock(K key)
-    {
-        auto shard = key % cShards;
-        this.mShards[shard].mSpinlock.unlock();
-    }
-
-    /** 
-     * Implementations of foreach traversal. opApply first bypasses unblocked shards, 
-     * and then waits for the blocked ones to be unblocked, thereby allowing you to start 
-     * traversing the Map faster.
-     */
-    int opApply(scope int delegate(ref V) dg)
-    {
-        int result = 0;
-
-        Shard*[cShards] shards;
-        uint lockedCount;
-
-        foreach (ref shard; this.mShards)
-        {
-            if (shard.mSpinlock.tryLock())
-            {
-                scope (exit)
-                {
-                    shard.mSpinlock.unlock();
-                }
-
-                foreach (ref item; shard.map.byValue)
-                {
-                    result = dg(item);
-                    if (result)
-                        return result;
-                }
-            }
-            else
-            {
-                shards[lockedCount++] = &shard;
-            }
-        }
-
-        foreach (Shard* shardPtr; shards[0 .. lockedCount])
-        {
-            shardPtr.mSpinlock.lock();
-            scope (exit)
-            {
-                shardPtr.mSpinlock.unlock();
-            }
-
-            foreach (ref item; shardPtr.map.byValue)
-            {
-                result = dg(item);
-                if (result)
-                    return result;
-            }
-        }
-
-        return result;
-    }
-    /// ditto
-    int opApply(scope int delegate(K, ref V) dg)
-    {
-        int result = 0;
-
-        Shard*[cShards] shards;
-        uint lockedCount;
-
-        foreach (ref shard; this.mShards)
-        {
-            if (shard.mSpinlock.tryLock())
-            {
-                scope (exit)
-                {
-                    shard.mSpinlock.unlock();
-                }
-
-                foreach (key, ref item; shard.map)
-                {
-                    result = dg(key, item);
-                    if (result)
-                        return result;
-                }
-            }
-            else
-            {
-                shards[lockedCount++] = &shard;
-            }
-        }
-
-        foreach (Shard* shardPtr; shards[0 .. lockedCount])
-        {
-            shardPtr.mSpinlock.lock();
-            scope (exit)
-            {
-                shardPtr.mSpinlock.unlock();
-            }
-
-            foreach (key, ref item; shardPtr.map)
-            {
-                result = dg(key, item);
-                if (result)
-                    return result;
-            }
-        }
-
-        return result;
-    }
-
-    /** 
-     * Completely clears all shards to init state.
-     */
     void clear()
     {
-        foreach (ref shard; this.mShards)
-        {
-            shard.mSpinlock.lock();
-            shard.map = null;
-            shard.mSpinlock.unlock();
-        }
+        this.sparse.clear();
+        this.dense.clear();
     }
 
-    UnShared!(Shard[31]) mShards;
+    void remove(V element)
+    {
+        if(!this.contain(element))
+        {
+            return;
+        }
+
+        const denseId = this.sparse[element];
+
+        this.dense[denseId] = this.dense[$ - 1];
+        this.sparse[this.dense[$ - 1]] = denseId;
+
+        this.dense.length = this.dense.length - 1;
+    }
+
+    private Array!(V, PickDefaultAllocator!V, 2.25) sparse;
+    private Array!(V, PickDefaultAllocator!V, 2.25) dense;
 }
-///
-@("SharedMap")
+
+/// 
+@("SparseSet")
 unittest
 {
     import io = std.stdio;
-    import rlib.core.utils.containers : SharedMap;
-    import std.parallelism : parallel;
-    import std.range : iota;
 
-    auto map = new SharedMap!(int, int);
+    SparseSet!int test;
 
-    foreach (i; 1_000.iota.parallel)
+    foreach (i; 0 .. 2)
     {
-        map[i] = i;
-    }
+        test.add(1);
+        test.add(2);
+        test.add(3);
+        test.add(4);
+        test.add(5);
+        test.add(6);
+        test.add(7);
+        test.add(8);
+        test.add(9);
+        test.add(10);
 
-    foreach (_; 10.iota.parallel(1))
-    {
-        foreach (key, value; map)
-        {
-            assert(key == value);
-        }
+        assert(!test.contain(0));
+        assert(test.contain(1));
+        assert(test.contain(2));
+        assert(test.contain(3));
+        assert(test.contain(4));
+        assert(test.contain(5));
+        assert(test.contain(6));
+        assert(test.contain(7));
+        assert(test.contain(8));
+        assert(test.contain(9));
+        assert(test.contain(10));
+        assert(!test.contain(11));
+        
+        test.remove(1);
+        test.remove(2);
+        test.remove(3);
+        test.remove(4);
+        test.remove(5);
+        test.remove(6);
+        test.remove(7);
+        test.remove(8);
+        test.remove(9);
+        test.remove(10);
+
+        assert(!test.contain(0));
+        assert(!test.contain(1));
+        assert(!test.contain(2));
+        assert(!test.contain(3));
+        assert(!test.contain(4));
+        assert(!test.contain(5));
+        assert(!test.contain(6));
+        assert(!test.contain(7));
+        assert(!test.contain(8));
+        assert(!test.contain(9));
+        assert(!test.contain(10));
+        assert(!test.contain(11));
+
+        test.add(1);
+        test.add(2);
+        test.add(3);
+        test.add(4);
+        test.add(5);
+        test.add(6);
+        test.add(7);
+        test.add(8);
+        test.add(9);
+        test.add(10);
+
+        test.clear();
+        
+        assert(!test.contain(0));
+        assert(!test.contain(1));
+        assert(!test.contain(2));
+        assert(!test.contain(3));
+        assert(!test.contain(4));
+        assert(!test.contain(5));
+        assert(!test.contain(6));
+        assert(!test.contain(7));
+        assert(!test.contain(8));
+        assert(!test.contain(9));
+        assert(!test.contain(10));
+        assert(!test.contain(11));
     }
 }
