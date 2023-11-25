@@ -1,3 +1,40 @@
+/** 
+ * This module implements a wrapper over std.experimental.allocator to simplify memory allocation for arrays, objects, etc.
+ * 
+ * Does't work in CTFE, for this recommended to use built-in new.
+ *
+ * To allocate and free memory, a memory allocator is used, passed through a template argument. 
+ * the allocator must fit the type requirements. The absence of aligned memory allocation is allowed 
+ * if the size of the required type alignment is less than or equal to 16 (standard malloc alignment). 
+ * Otherwise, the allocator must provide the `alignedAllocate` and `alignedReallocate` methods to 
+ * allocate aligned memory. By default, a suitable allocator is selected to allocate memory specifically 
+ * (Mallocator or AlignedMallocator).
+ *
+ * ---------------
+ * import rlib.core.memory.memory: New, Delete;
+ * 
+ * class Test1
+ * {
+ * }
+ * struct Test2
+ * {
+ * }
+ * 
+ * Test test1 = New!Test1; // Allocate an object of the `Test` class.
+ * Delete(test1); // Destroy an object of the `Test` class and free memory.
+ * 
+ * int[] test2 = New!(int[])(123) // It also works with arrays.
+ * assert(test2.length == 123)
+ * Delete(test2);
+ *
+ * double* test3 = New!double; 
+ * Delete(test3);
+ *
+ * Test2* test4 = New!Test2; 
+ * Delete(test4);
+ * 
+ * ---------------
+ */
 module rlib.core.memory.memory;
 import core.lifetime: emplace;
 import std.algorithm.mutation;
@@ -7,6 +44,7 @@ import std.experimental.allocator.building_blocks;
 import std.math;
 import rlib.core.memory.allocators.common;
 import core.exception;
+
 
 template CheckAllocator(T)
 {
@@ -341,7 +379,13 @@ bool Realloc(Type, alloctr = PickDefaultAllocator!Type)(ref Unqual!Type array, s
 
 //dfmt on
 
-bool Delete(Type, alloctr = PickDefaultAllocator!Type)(Unqual!Type obj)
+bool Delete(Type)(Type obj)
+if(is(Unqual!Type == Type))
+{
+    return Delete!(Type, PickDefaultAllocator!Type)(obj);
+}
+
+bool Delete(Type, alloctr)(Type obj)
         if (CheckAllocatorForType!(Unqual!Type, alloctr) && isPointer!Type)
 {   
     alias instance = alloctr.instance;
@@ -357,7 +401,7 @@ bool Delete(Type, alloctr = PickDefaultAllocator!Type)(Unqual!Type obj)
     return instance.deallocate(cast(void[])data);
 }
 
-bool Delete(Type, alloctr = PickDefaultAllocator!Type, Args...)(Unqual!Type obj)
+bool Delete(Type, alloctr)(Type obj)
         if (CheckAllocatorForType!(Unqual!Type, alloctr) && is(Type == class))
 {
     alias instance = alloctr.instance;
@@ -372,8 +416,8 @@ bool Delete(Type, alloctr = PickDefaultAllocator!Type, Args...)(Unqual!Type obj)
     return instance.deallocate(data);
 }
 
-bool Delete(Type, alloctr = PickDefaultAllocator!Type)(Unqual!Type obj)
-        if (CheckAllocatorForType!(Unqual!Type, alloctr) && isDynamicArray!Type)
+bool Delete(Type, alloctr)(Type obj)
+        if (CheckAllocatorForType!(Type, alloctr) && isDynamicArray!Type)
 {
     alias instance = alloctr.instance;
     static if(is(Unqual!Type == void[]))
