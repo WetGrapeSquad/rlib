@@ -44,39 +44,18 @@ shared static this()
     //dfmt off
     version (Windows)
     {
-        static if (sizeof(size_t) == 8)
+        static if (size_t.sizeof == 8)
         {
-            debug
-            {
-                auto _wgpuSupport = loadWGPU("thirdparty/windows-x64-debug/wgpu_native.dll");
-            }
-        else
-            {
-                auto _wgpuSupport = loadWGPU("thirdparty/windows-x64/wgpu_native.dll");
-            }
+            auto _wgpuSupport = loadWGPU("thirdparty/windows-x64/wgpu_native.dll");
         }
         else
         {
-            debug
-            {
-                auto _wgpuSupport = loadWGPU("thirdparty/windows-x86-debug/wgpu_native.dll");
-            }
-        else
-            {
-                auto _wgpuSupport = loadWGPU("thirdparty/windows-x86/wgpu_native.dll");
-            }
+            auto _wgpuSupport = loadWGPU("thirdparty/windows-x86/wgpu_native.dll");
         }
     }
     else
     {
-        debug
-        {
-            auto _wgpuSupport = loadWGPU("thirdparty/linux-x64-debug/libwgpu_native.so");
-        }
-        else
-        {
-            auto _wgpuSupport = loadWGPU("thirdparty/linux-x64/libwgpu_native.so");
-        }
+        auto _wgpuSupport = loadWGPU("thirdparty/linux-x64/libwgpu_native.so");
     }
     //dfmt on
 
