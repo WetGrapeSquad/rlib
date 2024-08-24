@@ -164,10 +164,10 @@ struct Vec(T, uint N)
 
         auto modulus() const @trusted nothrow @property @nogc
         {
-            CommonType!(float, T) sum;
+            CommonType!(float, T) sum = 0;
             static foreach (i; 0 .. N)
             {
-                sum = (cast(float) this._data[i]) * (cast(float) this._data[i]);
+                sum += (cast(float) this._data[i]) * (cast(float) this._data[i]);
             }
             return sqrt(sum);
         }
@@ -193,10 +193,21 @@ struct Vec(T, uint N)
             return normalized;
         }
 
+        auto summate() const @trusted nothrow @property @nogc
+        {
+            T sum = 0;
+            static foreach (i; 0 .. N)
+            {
+                sum += this._data[i];
+            }
+            return sum;
+        }
+
         auto angle(R)(Vec!(R, N) second) const @trusted nothrow @property @nogc
         {
             alias Cmn = CommonType!(float, T, R);
-            const _cos = (cast(Cmn)this * cast(Cmn)second) / (cast(Cmn) this.modulus * cast(Cmn) second.modulus);
+            const _cos = (cast(Cmn)((this * second)
+                    .summate()) / (cast(Cmn) this.modulus * cast(Cmn) second.modulus));
             return acos(_cos);
         }
     }
@@ -263,6 +274,14 @@ struct Vec(T, uint N)
     }
 
     T[N] _data;
+}
+
+@("Vec.modulus") unittest
+{
+    import std.math : isClose;
+
+    FVec2 vec1 = [1, 2], vec2 = [2, 1];
+    assert(isClose(vec1.angle(vec2), acos(4.0f / 5.0f)));
 }
 
 alias BVec2 = Vec!(byte, 2);
