@@ -40,15 +40,15 @@
     "copyFiles-linux-x64": ["thirdparty/linux-x64/*.dll"],
 
     "dependencies": {
-        "seh": "~>0.0.5",
-        "bindbc-wgpu": "~>0.17.0",
-        "bindbc-sdl": "~>1.4.2",
+        "seh": "~>0.0.22",
+        "bindbc-wgpu": "~>0.19.1",
+        "bindbc-sdl": "~>1.4.8",
         "semver": "~>0.5.0",
         "singlog": "~>0.5.0",
         "silly": "~>1.1.1"
     },
     "versions": [
-        "SDL_2_28"
+        "SDL_2_30"
     ],
     "license": "MIT",
     "name": "rlib"
