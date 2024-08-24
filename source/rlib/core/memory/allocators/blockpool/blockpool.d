@@ -110,18 +110,18 @@ class BlockPool(uint cAlign)
      */
     void[] tryRent()
     {
-        if(this.mRawMemory is null)
+        if (this.mRawMemory is null)
         {
             return null;
         }
         if (this.mInited < this.mBlockCount)
         {
             ++this.mAllocated;
-            
-            ubyte[] data = cast(ubyte[])this.getData(this.mInited++);
-            if(this.mInitValue !is null)
+
+            ubyte[] data = cast(ubyte[]) this.getData(this.mInited++);
+            if (this.mInitValue !is null)
             {
-                data[] = (cast(ubyte[])this.mInitValue)[];
+                data[] = (cast(ubyte[]) this.mInitValue)[];
             }
             return data;
         }
@@ -134,11 +134,11 @@ class BlockPool(uint cAlign)
         ++this.mAllocated;
         const firstFree = this.mFirstFree;
         this.mFirstFree = this.getNextFree(firstFree);
-        
-        ubyte[] data = cast(ubyte[])this.getData(firstFree);
-        if(this.mInitValue !is null)
+
+        ubyte[] data = cast(ubyte[]) this.getData(firstFree);
+        if (this.mInitValue !is null)
         {
-            data[] = (cast(ubyte[])this.mInitValue)[];
+            data[] = (cast(ubyte[]) this.mInitValue)[];
         }
         return data;
     }
@@ -150,7 +150,7 @@ class BlockPool(uint cAlign)
      */
     void recycle(void[] data)
     {
-        if(this.mRawMemory is null)
+        if (this.mRawMemory is null)
         {
             return;
         }
@@ -229,7 +229,6 @@ class BlockPool(uint cAlign)
         }
     }
 
-
     private uint mInited = 0;
     private uint mAllocated = 0;
     private uint mFirstFree = -1;
@@ -246,7 +245,7 @@ class BlockPool(uint cAlign)
 ///
 @("BlockPool") unittest
 {
-    import rlib.core.memory.allocators.blockpool.blockpool: BlockPool;
+    import rlib.core.memory.allocators.blockpool.blockpool : BlockPool;
     import core.stdc.stdlib;
 
     void freeDel(void[] ptr)
@@ -270,7 +269,7 @@ class BlockPool(uint cAlign)
         }
 
         pool.recycle(null);
-        
+
         assert(pool.tryRent() is null, "Unfair block allocator");
 
         foreach (i, ref el; ptr)
