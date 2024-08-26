@@ -51,5 +51,21 @@
         "SDL_2_30"
     ],
     "license": "MIT",
-    "name": "rlib"
+    "name": "rlib",
+
+	"sourceFiles-linux": [
+		"./thirdparty/mimalloc/out/libmimalloc-debug.a"
+	],
+
+	"preBuildCommands": ["dub $PACKAGE_DIR/thirdparty/build.d"],
+
+	"environments-windows": {
+		"THIRDPARTY_DIR": "$PACKAGE_DIR\\thirdparty"
+	},
+	"environments-linux": {
+		"THIRDPARTY_DIR": "$PACKAGE_DIR/thirdparty"
+	},
+	"environments-macos": {
+		"THIRDPARTY_DIR": "$PACKAGE_DIR/thirdparty"
+	}
 }

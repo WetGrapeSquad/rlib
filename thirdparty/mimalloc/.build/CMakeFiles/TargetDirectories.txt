@@ -1,0 +1,14 @@
+/home/kiper220/Документы/Projects/rlib/thirdparty/mimalloc/.build/CMakeFiles/mimalloc.dir
+/home/kiper220/Документы/Projects/rlib/thirdparty/mimalloc/.build/CMakeFiles/mimalloc-static.dir
+/home/kiper220/Документы/Projects/rlib/thirdparty/mimalloc/.build/CMakeFiles/mimalloc-obj.dir
+/home/kiper220/Документы/Projects/rlib/thirdparty/mimalloc/.build/CMakeFiles/mimalloc-obj-target.dir
+/home/kiper220/Документы/Projects/rlib/thirdparty/mimalloc/.build/CMakeFiles/mimalloc-test-api.dir
+/home/kiper220/Документы/Projects/rlib/thirdparty/mimalloc/.build/CMakeFiles/mimalloc-test-api-fill.dir
+/home/kiper220/Документы/Projects/rlib/thirdparty/mimalloc/.build/CMakeFiles/mimalloc-test-stress.dir
+/home/kiper220/Документы/Projects/rlib/thirdparty/mimalloc/.build/CMakeFiles/test.dir
+/home/kiper220/Документы/Projects/rlib/thirdparty/mimalloc/.build/CMakeFiles/edit_cache.dir
+/home/kiper220/Документы/Projects/rlib/thirdparty/mimalloc/.build/CMakeFiles/rebuild_cache.dir
+/home/kiper220/Документы/Projects/rlib/thirdparty/mimalloc/.build/CMakeFiles/list_install_components.dir
+/home/kiper220/Документы/Projects/rlib/thirdparty/mimalloc/.build/CMakeFiles/install.dir
+/home/kiper220/Документы/Projects/rlib/thirdparty/mimalloc/.build/CMakeFiles/install/local.dir
+/home/kiper220/Документы/Projects/rlib/thirdparty/mimalloc/.build/CMakeFiles/install/strip.dir
