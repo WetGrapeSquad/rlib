@@ -54,7 +54,7 @@
     "name": "rlib",
 
 	"sourceFiles-linux": [
-		"./thirdparty/mimalloc/out/libmimalloc-debug.a"
+		"./thirdparty/mimalloc/.out/libmimalloc-debug.a"
 	],
 
 	"preBuildCommands": ["dub $PACKAGE_DIR/thirdparty/build.d"],

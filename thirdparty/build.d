@@ -76,12 +76,12 @@ int build_cmake_static(string folder, string[] libs, string config = "Release", 
 
     version (Windows)
     {
-        string output_path = environment["THIRDPARTY_DIR"] ~ '\\' ~ folder ~ "\\out\\";
+        string output_path = environment["THIRDPARTY_DIR"] ~ '\\' ~ folder ~ "\\.out\\";
         string build_path = environment["THIRDPARTY_DIR"] ~ '\\' ~ folder ~ "\\.build\\";
     }
     else
     {
-        string output_path = environment["THIRDPARTY_DIR"] ~ '/' ~ folder ~ "/out/";
+        string output_path = environment["THIRDPARTY_DIR"] ~ '/' ~ folder ~ "/.out/";
         string build_path = environment["THIRDPARTY_DIR"] ~ '/' ~ folder ~ "/.build/";
     }
 
