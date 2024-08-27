@@ -34,8 +34,6 @@ int build_cmake(string folder, string config = "Release", string target)
         string build_path = environment["THIRDPARTY_DIR"] ~ '/' ~ folder ~ "/.build/";
     }
 
-    mkdirRecurse(build_path);
-
     cwriteln("Generate ".rightJustify(13).color(fg.green), folder, " cmake project");
     auto result = executeShell(
         "cmake -S \"%s\" -B \"%s\" -D CMAKE_BUILD_TYPE:STRING=%s".format(
