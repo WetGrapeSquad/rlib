@@ -27,6 +27,11 @@ docs/
 # Code coverage
 *.lst
 
+### CMake Patch ###
+# Thirdparty Build
+.build/
+.out/
+
 ### D Patch ###
 # Test Executables
 *-test-*
